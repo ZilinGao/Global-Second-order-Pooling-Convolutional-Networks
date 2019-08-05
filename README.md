@@ -1,7 +1,7 @@
 # Global-Second-order-Pooling-Convolutional-Networks
 Global Second-order Pooling Convolutional Networks (CVPR2019 GSoP)
 
-This is an implementation of GSoP Net[paper][1] , created by Zilin Gao.
+This is an implementation of GSoP Net[[paper]][1] , created by Zilin Gao.
 
 [1]: http://openaccess.thecvf.com/content_CVPR_2019/papers/Gao_Global_Second-Order_Pooling_Convolutional_Networks_CVPR_2019_paper.pdf
 
