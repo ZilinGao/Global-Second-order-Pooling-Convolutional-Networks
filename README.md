@@ -1,9 +1,8 @@
 # Global-Second-order-Pooling-Convolutional-Networks
-Global Second-order Pooling Convolutional Networks (cvpr2019 GSoP)
+Global Second-order Pooling Convolutional Networks (CVPR2019 GSoP)
 
-This is an implementation of GSoP Net([paper](https://arxiv.org/pdf/1811.12006.pdf)) , created by [Zilin Gao](https://github.com/zilingao).
+This is an implementation of GSoP Net([paper](openaccess.thecvf.com/content_CVPR_2019/papers/Gao_Global_Second-Order_Pooling_Convolutional_Networks_CVPR_2019_paper.pdf)) , created by Zilin Gao.
 
-![GSoP_arch](fig/GSoP_arch.png)
 ## Introduction
 
 Deep Convolutional Networks (ConvNets) are fundamental to, besides large-scale visual recognition, a lot of vision tasks. As the primary goal of the ConvNets is to
@@ -27,34 +26,17 @@ while achieving state-of-the-art results.
                     year = {2018}
       }
 
+## GSoP Nets
+
+![GSoP_arch](fig/GSoP_arch.png)
+
+The proposed global second-order pooling (GSoP) block can be conveniently inserted after any convolutional layer in-between network. We propose to use, at the network end, GSoP block followed by common global average pooling producing compact image representations (GSoP-Net1), or matrix power normalized covariance [23] outputting covariance matrices as image representations (GSoP-Net2).
 
 ## GSoP Block
 
 ![GSoP_block](fig/GSoP_block.png)
-We design a GSoP block to introduce global second-order pooling into intermediate layers of deep ConvNets,
-which goes beyond the existing works where GSoP can only be used at network end. By modeling higher-order statistics of
-holistic images at earlier stages, our network can enhance capability of non-linear representation learning of deep networks.
+Given an input tensor, after dimension reduction, the GSoP block starts with covariance matrix computation, followed by two consecutive operations of a linear convolution and non-linear activation, producing the output tensor which is scaling (multiplication) of the input one along the channel dimension.
 
-![GSoP_block_table](fig/GSoP_block_table.png)
-
-## GSoP Nets
-
-Based on GSoP block, we propose two GSoP networks parallel. In the two GSoP networks, GSoP blocks are embedded into the end of residual stages.
-
-### GSoP-Net1
-
-![GSoP_Net1](fig/GSoP_Net1.png)
-
-In GSoP-Net1, each residual stage is attached by one GSoP block, to be specific, GSoP-Net1 with ResNet-50 backbone employs 4 GSoP blocks.
-The final pooling layer keeps the original global average pooling in backbone.
-
-### GSoP-Net2
-
-![GSoP_Net2](fig/GSoP_Net2.png)
-
-In GSoP-Net2, except for the last residual stage, each of other residual stage is followed by one GSoP block as in GSoP-Net. 
-In the last stage, an [iSQRT-COV](http://openaccess.thecvf.com/content_cvpr_2018/papers/Li_Towards_Faster_Training_CVPR_2018_paper.pdf)
-meta layer is used to replace the global average pooling layer.
 
 ## Environment & Machine Configuration
 
@@ -72,52 +54,62 @@ You can start up the experiments by run train.sh.
 
 ```
 set -e
-arch=resnet50
-GSoP_mode=1 #GSoP-Net2:2
-batchsize=224
-attpos=001\ 0001\ 000001\ 001 
-#attpos=001\ 0001\ 000001\ 000 #for GSoP-Net2
+arch=resnet50 #resnet101
+GSoP_mode=1 #2  #GSoP-Net1: mode1; GSoP-Net2: mode2
+batchsize=384
 attdim=128
-spa_h=14
-modeldir=ImageNet1k-$arch-GSoP$GSoP_mode-ch$attdim-sp$spa_h-bn-001-0001-000001-001-bs$batchsize
-dataset=/path/to/dataset/
+modeldir=ImageNet1k-$arch-GSoP$GSoP_mode
+dataset=/put/your/dataset/path/here
 
 if [ ! -e $modeldir/*.pth.tar ]; then
 
 if [ ! -d  "$modeldir" ]; then
-
+   
 mkdir $modeldir
 
 fi
 cp train.sh $modeldir
 
-CUDA_VISIBLE_DEVICES=4,5,6,7 python3 main.py -a $arch\
+python main.py -a $arch\
                -p 100\
                -j 8\
                -b $batchsize\
-               --GSoP_mode $GSoP_mode\
                --attpos $attpos\
+               --GSoP_mode $GSoP_mode\
                --attdim $attdim\
-               --spa_h $spa_h\
                --modeldir $modeldir\
                $dataset
 else
 checkpointfile=$(ls -rt $modeldir/*.pth.tar | tail -1)
 
-CUDA_VISIBLE_DEVICES=4,5,6,7 python3 main.py -a $arch\
+python main.py -a $arch\
                -p 100\
                -j 8\
                -b $batchsize\
-               --GSoP_mode $GSoP_mode\
                --attpos $attpos\
-               --spa_h $spa_h\
+               --GSoP_mode $GSoP_mode\
                --attdim $attdim\
                --modeldir $modeldir\
                --resume $checkpointfile\
                $dataset
 
 fi
+```
+## GSoP code components
 
+```
+├── main.py #main function
+├── train.sh #script file
+├── torchvision
+│   ├── models
+│   │   ├── __init__.py
+│   │   ├── resnet.py  #resnet models 
+│   │   ├── ....
+│   │   └── ...
+│   ├── ....
+│   └── ....
+└── torchviz
+        └── ...
 ```
 
 ## Experiments
