@@ -82,6 +82,9 @@ parser.add_argument('--GSoP_mode', default=1, type=int,
                     help='GSoP-Net mode select: GSoP-Net1 or GSop-Net2')
 parser.add_argument('--modeldir', default=None, type=str,
                     help='define the dimension of attention module')
+parser.add_argument('--att_manner', default='channel', type=str,
+                    help='attention manner')
+					
 best_prec1 = 0
 
 class stats:
@@ -106,15 +109,29 @@ class stats:
 
     
 def main():
-    pdb.set_trace()
     global args, best_prec1
     args = parser.parse_args()
 
     print("{} epochs total". format(args.epochs))
+    if args.att_manner == 'channel':
+       att = '1'
+    elif args.att_manner == 'position' :
+       att = '2'
+    elif args.att_manner == 'fusion_max' :
+       att = 'M'
+    elif args.att_manner == 'fusion_avg' :
+       att = '+'
+    elif args.att_manner == 'fusion_concat' :
+       att = '&'
+    else :
+       assert False, "invalid att_manner"
+		
+    print("==========attention mode: {}===========". format(args.att_manner))
+
     if args.arch == 'resnet50':
-       args.attpos = [['0']*2+['1'],['0']*3+['1'],['0']*5+['1'],['0']*2+['1']]
+       args.attpos = [['0']*2+[att],['0']*3+[att],['0']*5+[att],['0']*2+[att]]
     elif args.arch == 'resnet101':
-       args.attpos = [['0']*2+['1'],['0']*3+['1'],['0']*22+['1'],['0']*2+['1']]
+       args.attpos = [['0']*2+[att],['0']*3+[att],['0']*22+[att],['0']*2+[att]]
     else :
        assert False, "invalid arch"
 
@@ -122,10 +139,7 @@ def main():
        args.epochs = 95
     elif args.GSoP_mode == 2:
        args.epochs = 65
-       if args.arch == 'resnet50':
-          args.attpos[-1][-1]='0'
-       elif args.arch == 'resnet101':
-          args.attpos[-1][-1]='0'
+       args.attpos[-1][-1]='0'
     else :
        assert False, "invalid GSoP mode"
     
@@ -159,8 +173,9 @@ def main():
         model = models.__dict__[args.arch](att_position = args.attpos,att_dim = args.attdim,
                                            GSoP_mode = args.GSoP_mode)
 
-    
-    vizNet(model, args.modeldir)
+    print_graph = True
+    if print_graph: #print arch to graph.pdf
+       vizNet(model, args.modeldir) 
     if args.gpu is not None:
         model = model.cuda(args.gpu)
     elif args.distributed:
