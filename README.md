@@ -25,19 +25,16 @@ while achieving state-of-the-art results.
                     author = {Zilin, Gao and Jiangtao, Xie and Qilong, Wang and Peihua, Li},
                     title = {Global Second-order Pooling Convolutional Networks},
                     booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-                    year = {2018}
+                    year = {2019}
       }
 
 ## GSoP Nets
 
-![GSoP_arch](fig/GSoP_arch.png)
+![GSoP_arch](fig/GSoP_net&block.jpg)
 
-The proposed global second-order pooling (GSoP) block can be conveniently inserted after any convolutional layer in-between network. We propose to use, at the network end, GSoP block followed by common global average pooling producing compact image representations (GSoP-Net1), or matrix power normalized covariance [23] outputting covariance matrices as image representations (GSoP-Net2).
+- The proposed global second-order pooling (GSoP) block can be conveniently inserted after any convolutional layer in-between network. We propose to use, at the network end, GSoP block followed by common global average pooling producing compact image representations (GSoP-Net1), or matrix power normalized covariance [23] outputting covariance matrices as image representations (GSoP-Net2).
 
-## GSoP Block
-
-![GSoP_block](fig/GSoP_block.png)
-Given an input tensor, after dimension reduction, the GSoP block starts with covariance matrix computation, followed by two consecutive operations of a linear convolution and non-linear activation, producing the output tensor which is scaling (multiplication) of the input one along the channel dimension.
+- Given an input tensor, after dimension reduction, the GSoP block starts with covariance matrix computation, followed by two consecutive operations of a linear convolution and non-linear activation, producing the output tensor which is scaling (multiplication) of the input one along the channel dimension.
 
 
 ## Environment & Machine Configuration
@@ -50,52 +47,41 @@ Given an input tensor, after dimension reduction, the GSoP block starts with cov
  
 - system: Ubuntu 16.04
 
+## Install
+1. pytorch installation following [pytorch.org][3]
+2. other toolkits
+```
+pip install graphviz
+conda install tqdm
+```
+
+[3]: https://pytorch.org/get-started/locally/
+
 ## Start Up
 
 You can start up the experiments by run train.sh.
 
 ```
-set -e
 arch=resnet50 #resnet101
-GSoP_mode=1 #2  #GSoP-Net1: mode1; GSoP-Net2: mode2
+GSoP_mode=1 #2
+att_manner=channel #{channel, position, fusion_avg, fusion_max, fusion_concat}
 batchsize=384
 attdim=128
-modeldir=ImageNet1k-$arch-GSoP$GSoP_mode
+modeldir=checkpoints/ImageNet1k-$arch-GSoP$GSoP_mode-${att_manner}
 dataset=/put/your/dataset/path/here
 
-if [ ! -e $modeldir/*.pth.tar ]; then
-
-if [ ! -d  "$modeldir" ]; then
-   
-mkdir $modeldir
-
-fi
 cp train.sh $modeldir
 
 python main.py -a $arch\
                -p 100\
                -j 8\
                -b $batchsize\
-               --attpos $attpos\
                --GSoP_mode $GSoP_mode\
+               --att_manner ${att_manner}\
                --attdim $attdim\
                --modeldir $modeldir\
                $dataset
-else
-checkpointfile=$(ls -rt $modeldir/*.pth.tar | tail -1)
 
-python main.py -a $arch\
-               -p 100\
-               -j 8\
-               -b $batchsize\
-               --attpos $attpos\
-               --GSoP_mode $GSoP_mode\
-               --attdim $attdim\
-               --modeldir $modeldir\
-               --resume $checkpointfile\
-               $dataset
-
-fi
 ```
 ## GSoP code components
 
@@ -105,7 +91,7 @@ fi
 ├── torchvision
 │   ├── models
 │   │   ├── __init__.py
-│   │   ├── resnet.py  #resnet models 
+│   │   ├── resnet.py  #GSoP block code is here
 │   │   ├── ....
 │   │   └── ...
 │   ├── ....
